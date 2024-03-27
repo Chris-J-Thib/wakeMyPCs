@@ -6,5 +6,8 @@
     <string name="port">25840</string>
     <string name="user">pi</string>
     <string name="pass">123</string>
-
+    <string-array name="PCs">
+        <item>Green PC = 9C:6B:00:30:15:52</item>
+        <item>Soul PC = 04:D9:F5:7C:FB:33</item>
+    </string-array>
 </resources>
