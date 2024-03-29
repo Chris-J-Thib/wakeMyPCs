@@ -1,4 +1,4 @@
-package com.example.Wake_My_PCs.ui.theme
+package com.wakeMyPCs.ui.theme
 
 import android.app.Activity
 import android.os.Build

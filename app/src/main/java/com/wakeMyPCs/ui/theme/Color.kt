@@ -1,4 +1,4 @@
-package com.example.Wake_My_PCs.ui.theme
+package com.wakeMyPCs.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

@@ -1,6 +1,7 @@
-package com.example.Wake_My_PCs
+package com.wakeMyPCs
 
-import android.content.Context
+import android.content.SharedPreferences
+import com.example.Wake_My_PCs.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -8,11 +9,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 object SuspendFunctions {
-    private suspend fun ping(ip:String, context: Context): Int{
-        val host = context.resources.getString(R.string.host)
-        val port = context.resources.getString(R.string.port).toInt()
-        val user = context.resources.getString(R.string.user)
-        val pass = context.resources.getString(R.string.pass)
+    private suspend fun ping(ip:String, settings: SharedPreferences): Int{
+        val host = settings.getString("host","")
+        val port = settings.getInt("port",22)
+        val user = settings.getString("user","")
+        val pass = settings.getString("pass","")
         val ret: Int
 
         val answer = CoroutineScope(Dispatchers.IO).async {
@@ -28,9 +29,9 @@ object SuspendFunctions {
         return ret
     }
 
-    suspend fun getStatus(ip: String, context: Context): Int {
+    suspend fun getStatus(ip: String, settings: SharedPreferences): Int {
         var ret = 0
-        val res = CoroutineScope(Dispatchers.IO).async { ping(ip, context) }
+        val res = CoroutineScope(Dispatchers.IO).async { ping(ip, settings) }
         when (res.await()) {
             1 -> ret = R.drawable.on
             0 -> ret = R.drawable.off
@@ -39,11 +40,11 @@ object SuspendFunctions {
         return ret
     }
 
-    suspend fun getArpTable(context: Context): ArrayList<ArrayList<String>> {
-        val host = context.resources.getString(R.string.host)
-        val port = context.resources.getString(R.string.port).toInt()
-        val user = context.resources.getString(R.string.user)
-        val pass = context.resources.getString(R.string.pass)
+    suspend fun getArpTable(settings: SharedPreferences): ArrayList<ArrayList<String>> {
+        val host = settings.getString("host","")
+        val port = settings.getInt("port",22)
+        val user = settings.getString("user","")
+        val pass = settings.getString("pass","")
         val arp = ArrayList<ArrayList<String>>()
 
         val answer = CoroutineScope(Dispatchers.IO).async {
