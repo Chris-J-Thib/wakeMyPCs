@@ -1,5 +1,7 @@
 package com.wakeMyPCs
 
+import AppDatabase
+import RoomDatabase
 import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -52,6 +54,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.room.Database
+import androidx.room.Room
 import com.example.Wake_My_PCs.R
 import com.wakeMyPCs.SSHManager.executeCommand
 import com.wakeMyPCs.SuspendFunctions.getArpTable
@@ -65,16 +69,28 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
+    private lateinit var db: Database
     @SuppressLint("ApplySharedPref")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val settings = getSharedPreferences("settings", MODE_PRIVATE)
-        val pcs = getSharedPreferences("pcs", MODE_PRIVATE)
+        db = Room.databaseBuilder(
+            applicationContext,
+            AppDatabase::class.java, "pcs-database"
+        ).build()
 
         var start = 0
 
-        if (settings.all.isEmpty()) start = 2
+        CoroutineScope(Dispatchers.IO).launch {
+            if (db.PcDao().getAllPcs().isEmpty()) start = 2
+
+            withContext(Dispatchers.Main) {
+                setContent {
+                    Main(start)
+                }
+            }
+        }
 
         setContent {
             Main(settings, pcs, start)
