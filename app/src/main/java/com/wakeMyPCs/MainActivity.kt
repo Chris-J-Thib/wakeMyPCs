@@ -1,7 +1,5 @@
 package com.wakeMyPCs
 
-import AppDatabase
-import RoomDatabase
 import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -51,55 +49,51 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.room.Database
-import androidx.room.Room
 import com.example.Wake_My_PCs.R
 import com.wakeMyPCs.SSHManager.executeCommand
 import com.wakeMyPCs.SuspendFunctions.getArpTable
 import com.wakeMyPCs.SuspendFunctions.getCurrentIPv4
 import com.wakeMyPCs.SuspendFunctions.getStatus
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
-    private lateinit var db: Database
-    @SuppressLint("ApplySharedPref")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        var pcs = emptyList<Email>()
         val settings = getSharedPreferences("settings", MODE_PRIVATE)
-        db = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java, "pcs-database"
-        ).build()
 
-        var start = 0
 
+        // Launch a coroutine to fetch data from the database asynchronously
         CoroutineScope(Dispatchers.IO).launch {
-            if (db.PcDao().getAllPcs().isEmpty()) start = 2
+            try {
+                pcs = AppDatabase.getDatabase(applicationContext).pcDao().getAllPcs()
+                var start = 0
+                if (pcs.isEmpty()) start = 1
 
-            withContext(Dispatchers.Main) {
-                setContent {
-                    Main(start)
+                // Set the content on the main thread
+                withContext(Dispatchers.Main) {
+                    setContent {
+                        Main(settings, pcs, start)
+                    }
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-        }
-
-        setContent {
-            Main(settings, pcs, start)
         }
     }
 }
 
 @Composable
-fun Main(settings: SharedPreferences, pcs: SharedPreferences, start: Int) {
+fun Main(settings: SharedPreferences, pcs: List<Any>, start: Int) {
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val screenWidth = configuration.screenWidthDp.dp
@@ -141,7 +135,7 @@ fun Main(settings: SharedPreferences, pcs: SharedPreferences, start: Int) {
         when (connected.intValue) {
             -1 -> Error(settings, onUpdate = { connected.intValue = 2 })
             0 -> Connecting(settings)
-            1 -> HomeScreen(pcs, settings, onUpdate = { connected.intValue = 2 })
+            1 -> HomeScreen(pcs, settings) { connected.intValue = 2 }
             2 -> Settings(settings, onUpdate = { connected.intValue = 0 })
         }
     }
@@ -350,20 +344,20 @@ fun Error(settings: SharedPreferences, onUpdate: () -> Unit) {
 
 @SuppressLint("ApplySharedPref")
 @Composable
-fun HomeScreen(pcs: SharedPreferences, settings: SharedPreferences, onUpdate: () -> Unit) {
+fun HomeScreen(pcs: List<Any>, settings: SharedPreferences, onUpdate: () -> Unit) {
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val screenWidth = configuration.screenWidthDp.dp
     val bannerHeight = 50.dp
     val count = remember {
-        mutableIntStateOf(pcs.all.size)
+        mutableIntStateOf(pcs.size)
     }
     val showAddPC = remember {
         mutableStateOf(false)
     }
     if (showAddPC.value) AddPC(pcs,
-        onAdd = { showAddPC.value = false; count.intValue = pcs.all.size },
-        onCancel = { showAddPC.value = false })
+        onAdd = { showAddPC.value = false; count.intValue = pcs.size }
+    ) { showAddPC.value = false }
     Row(
         Modifier
             .height(bannerHeight)
@@ -413,13 +407,14 @@ fun HomeScreen(pcs: SharedPreferences, settings: SharedPreferences, onUpdate: ()
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (count.intValue >= 0) {
-            pcs.all.forEach { pc ->
-                item(key = pc.value) {
+            pcs.forEach { pc ->
+
+                item(key = pc) {
                     val sts = remember { mutableIntStateOf(R.drawable.wait) }
                     val update = remember { mutableStateOf(false) }
                     var arp = ArrayList<ArrayList<String>>()
-                    val name = pc.key
-                    val mac = pc.value.toString()
+                    val name = pc
+                    val mac = pc.toString()
                     var ip: String
 
                     LaunchedEffect(Unit) {
@@ -468,7 +463,7 @@ fun HomeScreen(pcs: SharedPreferences, settings: SharedPreferences, onUpdate: ()
                                 }
                             }
                         ) {
-                            Text(text = name, overflow = TextOverflow.Ellipsis, maxLines = 1)
+                            //Text(text = name, overflow = TextOverflow.Ellipsis, maxLines = 1)
                         }
 
                         Image(
@@ -481,8 +476,8 @@ fun HomeScreen(pcs: SharedPreferences, settings: SharedPreferences, onUpdate: ()
                                 .width(40.dp),
                             colors = ButtonDefaults.buttonColors(Color(0xffAA0000)),
                             onClick = {
-                                pcs.edit().remove(name).commit()
-                                count.intValue = pcs.all.size
+                                //pcs.edit().remove(name).commit()
+                                count.intValue = pcs.size
                             }
                         ) {
                             Image(
@@ -516,7 +511,7 @@ fun HomeScreen(pcs: SharedPreferences, settings: SharedPreferences, onUpdate: ()
 
 @SuppressLint("ApplySharedPref")
 @Composable
-fun AddPC(pcs: SharedPreferences, onAdd: () -> Unit, onCancel: () -> Unit) {
+fun AddPC(pcs: List<Any>, onAdd: () -> Unit, onCancel: () -> Unit) {
     val newName = remember {
         mutableStateOf("")
     }
@@ -532,10 +527,11 @@ fun AddPC(pcs: SharedPreferences, onAdd: () -> Unit, onCancel: () -> Unit) {
             Button(onClick = {
                 // Add a new item to pcs
                 if (newName.value.isNotBlank() && newMac.value.isNotBlank()) {
+                    /*
                     pcs.edit().apply {
                         putString(newName.value, newMac.value)
                         commit()
-                    }
+                    }*/
                 }
                 onAdd()
             }) {

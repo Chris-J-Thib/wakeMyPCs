@@ -1,37 +1,32 @@
-import androidx.room.ColumnInfo
-import androidx.room.Dao
+import android.content.Context
 import androidx.room.Database
-import androidx.room.Delete
-import androidx.room.Entity
-import androidx.room.Insert
-import androidx.room.PrimaryKey
-import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.wakeMyPCs.Email
 
-// Step 1: Define the Entity Class
-@Entity(tableName = "pcs")
-data class Pc(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    @ColumnInfo(name = "name") val name: String,
-    @ColumnInfo(name = "mac") val mac: String
-)
+@Database(entities = [Email::class], version = 1)
+abstract class AppDatabase: RoomDatabase() {
+    abstract fun pcDao(): PcDao
 
-// Step 2: Create the Data Access Object (DAO)
-@Dao
-interface PcDao {
-    @Query("SELECT * FROM pcs")
-    fun getAllPcs(): List<Pc>
+    companion object {
+        @Volatile
+        private var INSTANCE: AppDatabase? = null
 
-    @Insert
-    fun insertPc(pc: Pc)
+        fun getDatabase(
+            context: Context
+        ): AppDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context,
+                    AppDatabase::class.java,
+                    "app_database"
+                )
+                    .createFromAsset("database/Pcs.db")
+                    .build()
+                INSTANCE = instance
 
-    @Delete
-    fun deletePc(pc: Pc)
-}
-
-// Step 3: Create the Database Class
-@Database(entities = [Pc::class], version = 1)
-abstract class AppDatabase : RoomDatabase() {
-    abstract fun PcDao(): Any
+                instance
+            }
+        }
+    }
 }
