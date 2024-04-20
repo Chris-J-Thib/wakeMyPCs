@@ -1,5 +1,6 @@
 package com.wakeMyPCs
 
+import AppDatabase
 import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -60,6 +61,7 @@ import com.wakeMyPCs.SuspendFunctions.getStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -71,6 +73,12 @@ class MainActivity : ComponentActivity() {
 
         val settings = getSharedPreferences("settings", MODE_PRIVATE)
         val pcs = getSharedPreferences("pcs", MODE_PRIVATE)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            //AppDatabase.getDatabase(applicationContext).pcDao().getAllPcs()
+
+        }
+
 
         var start = 0
 

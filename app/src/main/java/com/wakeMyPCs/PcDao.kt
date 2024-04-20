@@ -1,9 +1,12 @@
+package com.wakeMyPCs
+
 import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
 import androidx.room.Query
-import com.wakeMyPCs.Email
 
 @Dao
 interface PcDao {
-    @Query("SELECT * FROM email")
-    suspend fun getAllPcs(): List<Email>
+    @Query("SELECT * FROM pcs")
+    fun getAllPcs(): List<Pc>
 }

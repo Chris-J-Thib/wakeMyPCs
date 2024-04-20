@@ -2,9 +2,10 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.wakeMyPCs.Email
+import com.wakeMyPCs.Pc
+import com.wakeMyPCs.PcDao
 
-@Database(entities = [Email::class], version = 1)
+@Database(entities = [Pc::class], version = 1)
 abstract class AppDatabase: RoomDatabase() {
     abstract fun pcDao(): PcDao
 
@@ -21,7 +22,7 @@ abstract class AppDatabase: RoomDatabase() {
                     AppDatabase::class.java,
                     "app_database"
                 )
-                    .createFromAsset("database/Pcs.db")
+                    .createFromAsset("database/PcsDB.db")
                     .build()
                 INSTANCE = instance
 
