@@ -1,4 +1,4 @@
-package com.wakeMyPCs;
+package com.wakeMyPCs.ssh;
 
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;

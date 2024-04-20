@@ -25,5 +25,6 @@
     <string name="try_a_different_host">Try A Different Host?</string>
     <string name="connecting_to_host">Connecting To Host\n</string>
     <string name="please_wait">Please Wait...</string>
+    <string name="save_action">Save Pc</string>
 
 </resources>

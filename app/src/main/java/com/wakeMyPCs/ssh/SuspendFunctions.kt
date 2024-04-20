@@ -1,4 +1,4 @@
-package com.wakeMyPCs
+package com.wakeMyPCs.ssh
 
 import android.content.SharedPreferences
 import com.example.Wake_My_PCs.R
@@ -15,7 +15,7 @@ object SuspendFunctions {
         val port = settings.getInt("port",22)
         val user = settings.getString("user","")
         val pass = settings.getString("pass","")
-        val ret: Int
+        var ret = -1
 
         val answer = CoroutineScope(Dispatchers.IO).async {
             SSHManager.executeCommand(
@@ -23,10 +23,16 @@ object SuspendFunctions {
                 "ping -c 1 $ip"
             )
         }
+
         val res = answer.await()
-        if (res.contains("Error")||res.split("\n").isEmpty()) return -1
+        if (res.contains("Error")) return 0
         else
-            ret = res.split("\n").dropLast(2).last().split(", ")[1].split(" ")[0].toInt()
+            try {
+                ret = res.split("\n").dropLast(2).last().split(", ")[1].split(" ")[0].toInt()
+
+            } catch (_: Exception){
+
+            }
         return ret
     }
 
@@ -71,7 +77,7 @@ object SuspendFunctions {
 
     }
 
-    suspend fun getCurrentIPv4(mac: String, arp: ArrayList<ArrayList<String>>): String{
+    suspend fun getCurrentIPv4(mac: String, arp: ArrayList<ArrayList<String>>): String {
         var ip = ""
         while (arp.size == 0) delay(15000L)
         run loop@{
