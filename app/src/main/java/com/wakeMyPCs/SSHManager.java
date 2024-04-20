@@ -11,6 +11,11 @@ public class SSHManager {
 
 
     private static String executeTask(String host, String username, String password, int port, String command) {
+
+        if(command.contains("sudo")&&!command.contains("-S")){
+            command = "echo '" + password+"' | sudo -S" + command.replace("sudo", " ");
+        }
+
         try {
             JSch jsch = new JSch();
             Session session = jsch.getSession(username, host, port);

@@ -8,6 +8,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
+
 object SuspendFunctions {
     private suspend fun ping(ip:String, settings: SharedPreferences): Int{
         val host = settings.getString("host","")
@@ -23,7 +24,7 @@ object SuspendFunctions {
             )
         }
         val res = answer.await()
-        if (res.contains("Error")) return -1
+        if (res.contains("Error")||res.split("\n").isEmpty()) return -1
         else
             ret = res.split("\n").dropLast(2).last().split(", ")[1].split(" ")[0].toInt()
         return ret

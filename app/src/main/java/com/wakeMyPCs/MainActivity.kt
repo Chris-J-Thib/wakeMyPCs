@@ -100,7 +100,7 @@ fun Main(settings: SharedPreferences, pcs: SharedPreferences, start: Int) {
                             settings.getString("user", ""),
                             settings.getString("pass", ""),
                             settings.getInt("port", 22),
-                            "echo hello"
+                            "sudo echo 'hello'"
                         )
                     }
                     val ret = answer.await()
@@ -401,21 +401,21 @@ fun HomeScreen(pcs: SharedPreferences, settings: SharedPreferences, onUpdate: ()
                 item(key = pc.value) {
                     val sts = remember { mutableIntStateOf(R.drawable.wait) }
                     val update = remember { mutableStateOf(false) }
+                    val ip = remember { mutableStateOf("")}
                     var arp = ArrayList<ArrayList<String>>()
                     val name = pc.key
                     val mac = pc.value.toString()
-                    var ip: String
 
                     LaunchedEffect(Unit) {
                         CoroutineScope(Dispatchers.Default).launch {
                             arp = getArpTable(settings)
-                            ip = getCurrentIPv4(mac, arp)
+                            ip.value = getCurrentIPv4(mac, arp)
                             while (true) {
-                                if (ip != "" && !update.value) sts.intValue =
-                                    getStatus(ip, settings)
-                                if (ip == "" && arp.size != 0 && !update.value) sts.intValue =
+                                if (ip.value != "" && !update.value) sts.intValue =
+                                    getStatus(ip.value, settings)
+                                if (ip.value == "" && arp.size != 0 && !update.value) sts.intValue =
                                     R.drawable.off
-                                delay(7000L)
+                                delay(5000L)
                             }
                         }
                     }
@@ -442,10 +442,11 @@ fun HomeScreen(pcs: SharedPreferences, settings: SharedPreferences, onUpdate: ()
                                             settings.getInt("port", 22),
                                             "sudo etherwake -i eth0 $mac"
                                         )
-                                        delay(45000L)
+                                        delay(30000L)
                                         withContext(Dispatchers.Main) {
                                             arp = getArpTable(settings)
-                                            ip = getCurrentIPv4(mac, arp)
+                                            ip.value = getCurrentIPv4(mac, arp)
+                                            sts.intValue = getStatus(ip.value, settings)
                                             update.value = false
                                         }
                                     }
